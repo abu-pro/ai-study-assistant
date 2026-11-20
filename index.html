@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Study Assistant — by Sufyan</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI', Arial, sans-serif; background:#0d1021; color:#eef0ff; min-height:100vh; }
+  header { text-align:center; padding:34px 16px 10px; }
+  header h1 { font-size:2.1rem; color:#f5c542; letter-spacing:.5px; }
+  header p { color:#aab; margin-top:6px; }
+  .badge { display:inline-block; margin-top:10px; background:#f5c542; color:#14142b; font-weight:700; padding:3px 14px; border-radius:20px; font-size:.85rem; }
+  nav { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:18px 10px 4px; }
+  nav button { background:#1b1f3d; color:#eef0ff; border:1px solid #343a6e; padding:10px 18px; border-radius:10px; cursor:pointer; font-size:.95rem; }
+  nav button.active { background:#f5c542; color:#14142b; font-weight:700; border-color:#f5c542; }
+  main { max-width:860px; margin:0 auto; padding:18px 16px 50px; }
+  .panel { display:none; background:#151936; border:1px solid #262b52; border-radius:14px; padding:22px; }
+  .panel.active { display:block; }
+  .panel h2 { color:#f5c542; font-size:1.25rem; margin-bottom:8px; }
+  .panel p.hint { color:#99a; font-size:.9rem; margin-bottom:14px; }
+  textarea, input[type=text], input[type=number], input[type=date] { width:100%; background:#0d1021; color:#eef0ff; border:1px solid #343a6e; border-radius:10px; padding:12px; font-size:.95rem; margin-bottom:12px; }
+  textarea { min-height:170px; resize:vertical; line-height:1.5; }
+  .btn { background:#f5c542; color:#14142b; border:none; font-weight:700; padding:11px 22px; border-radius:10px; cursor:pointer; font-size:.95rem; margin-right:8px; margin-top:4px; }
+  .btn.ghost { background:transparent; color:#f5c542; border:1px solid #f5c542; }
+  .q { background:#0d1021; border:1px solid #262b52; border-radius:10px; padding:14px 16px; margin-top:14px; }
+  .q p { margin-bottom:10px; line-height:1.55; }
+  .q label { display:block; padding:6px 10px; border-radius:8px; cursor:pointer; }
+  .q label:hover { background:#1b1f3d; }
+  .q .right { color:#5fd97a; font-weight:700; }
+  .q .wrong { color:#ff7a7a; font-weight:700; }
+  #quizScore { margin-top:16px; font-size:1.1rem; color:#f5c542; font-weight:700; }
+  .card { background:linear-gradient(135deg,#1d2250,#141736); border:1px solid #f5c54266; border-radius:16px; min-height:190px; display:flex; align-items:center; justify-content:center; text-align:center; padding:26px; font-size:1.25rem; cursor:pointer; line-height:1.5; }
+  .cardnav { display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
+  .plan-day { background:#0d1021; border-left:4px solid #f5c542; border-radius:8px; padding:12px 16px; margin-top:10px; line-height:1.55; }
+  #timerFace { font-size:4rem; text-align:center; color:#f5c542; font-weight:700; padding:16px 0; font-variant-numeric:tabular-nums; }
+  .center { text-align:center; }
+  footer { text-align:center; color:#778; padding:0 10px 26px; font-size:.85rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Study Assistant</h1>
+  <p>Paste your notes — get a quiz, flashcards, a study plan and a focus timer. Study smarter, not longer.</p>
+  <span class="badge">by Sufyan</span>
+</header>
+<nav>
+  <button data-tab="quiz" class="active">Quiz Maker</button>
+  <button data-tab="cards">Flashcards</button>
+  <button data-tab="plan">Study Plan</button>
+  <button data-tab="timer">Focus Timer</button>
+</nav>
+<main>
+  <section id="quiz" class="panel active">
+    <h2>Quiz Maker</h2>
+    <p class="hint">Write or paste your notes below, one fact per line like <b>Term: definition sentence.</b> Then press Generate Quiz — the assistant picks the key word out of every sentence and turns it into a question.</p>
+    <textarea id="notes"></textarea>
+    <button class="btn" id="sampleBtn">Load Sample Notes</button>
+    <button class="btn" id="quizBtn">Generate Quiz</button>
+    <div id="quizArea"></div>
+    <div id="quizScore"></div>
+  </section>
+
+  <section id="cards" class="panel">
+    <h2>Flashcards</h2>
+    <p class="hint">Flashcards are made from the same notes (the part before the colon becomes the front of the card). Click the card to flip it.</p>
+    <button class="btn" id="cardsBtn">Make Flashcards from Notes</button>
+    <div style="height:14px"></div>
+    <div class="card" id="flashCard">Press the button to make your cards</div>
+    <div class="cardnav">
+      <button class="btn ghost" id="prevCard">← Previous</button>
+      <span id="cardCount"></span>
+      <button class="btn ghost" id="nextCard">Next →</button>
+    </div>
+  </section>
+
+  <section id="plan" class="panel">
+    <h2>Study Plan</h2>
+    <p class="hint">Tell the assistant your subject, your topics (one per line) and how many days you have. It will spread the topics over your days and keep the last day for revision and a self test.</p>
+    <input type="text" id="planSubject" placeholder="Subject, e.g. Computer Science">
+    <textarea id="planTopics" style="min-height:110px" placeholder="One topic per line, e.g.&#10;CPU and Memory&#10;Operating Systems&#10;Number Systems"></textarea>
+    <input type="number" id="planDays" min="2" max="30" value="5" placeholder="Days available">
+    <button class="btn" id="planBtn">Make My Plan</button>
+    <div id="planArea"></div>
+  </section>
+
+  <section id="timer" class="panel">
+    <h2>Focus Timer</h2>
+    <p class="hint">Study in focused rounds: 25 minutes of study, then a 5 minute break. Press start and put the phone away.</p>
+    <div id="timerFace">25:00</div>
+    <div class="center">
+      <button class="btn" id="startTimer">Start</button>
+      <button class="btn ghost" id="pauseTimer">Pause</button>
+      <button class="btn ghost" id="resetTimer">Reset</button>
+      <button class="btn ghost" id="breakTimer">Break 5:00</button>
+    </div>
+    <p class="center" id="timerMsg" style="margin-top:14px;color:#99a"></p>
+  </section>
+</main>
+<footer>AI Study Assistant — made by Abu Sufyan, BS Software Engineering student, Riphah International University Sahiwal.</footer>
+
+<script>
+const SAMPLE = `CPU: The CPU is the brain of the computer and it processes every instruction given by the user.
+RAM: RAM is the short term memory of the computer and it stores the data that is being used right now.
+Hard Disk: The hard disk is the permanent storage of the computer where files and programs are saved.
+Photosynthesis: Photosynthesis is the process by which green plants make their own food using sunlight, water and air.
+Evaporation: Evaporation is the process in which water changes into vapour because of heat.
+Gravity: Gravity is the force that pulls objects towards the centre of the Earth.
+Volcano: A volcano is a mountain that opens downwards and allows hot lava and gases to escape.
+Atom: An atom is the smallest unit of matter and everything around us is made of atoms.`;
+
+const STOP = new Set(['the','a','an','and','or','of','to','in','is','are','was','were','it','its','by','on','for','with','that','this','which','into','from','every','given','being','used','made','allows','around','changes','because','their','own','using','downwards']);
+const notesEl = document.getElementById('notes');
+notesEl.value = SAMPLE;
+
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById(b.dataset.tab).classList.add('active');
+}));
+
+document.getElementById('sampleBtn').addEventListener('click', () => { notesEl.value = SAMPLE; });
+
+function keyWord(sentence) {
+  const words = sentence.replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 5 && !STOP.has(w.toLowerCase()));
+  if (!words.length) return null;
+  words.sort((a, b) => b.length - a.length);
+  return words[0];
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+let quizData = [];
+document.getElementById('quizBtn').addEventListener('click', () => {
+  const text = notesEl.value;
+  const sentences = text.split(/\n|(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.split(/\s+/).length >= 6);
+  const items = [];
+  sentences.forEach(s => { const k = keyWord(s); if (k) items.push({ sentence: s, key: k }); });
+  const pool = [...new Set(items.map(i => i.key))];
+  const area = document.getElementById('quizArea');
+  document.getElementById('quizScore').textContent = '';
+  if (items.length < 2) { area.innerHTML = '<div class="q">Please add a few more lines of notes first — each line should be a full sentence.</div>'; return; }
+  quizData = items.map(it => {
+    const others = shuffle(pool.filter(w => w !== it.key)).slice(0, 3);
+    return { q: it.sentence.replace(new RegExp(it.key, 'i'), '__________'), answer: it.key, options: shuffle([it.key, ...others]) };
+  });
+  area.innerHTML = quizData.map((it, i) =>
+    `<div class="q"><p><b>Q${i + 1}.</b> ${it.q}</p>` +
+    it.options.map(o => `<label><input type="radio" name="q${i}" value="${o}"> ${o}</label>`).join('') +
+    `<p class="fb" id="fb${i}"></p></div>`).join('') +
+    '<button class="btn" id="checkBtn" style="margin-top:16px">Check Answers</button>';
+  document.getElementById('checkBtn').addEventListener('click', () => {
+    let score = 0;
+    quizData.forEach((it, i) => {
+      const sel = document.querySelector(`input[name="q${i}"]:checked`);
+      const fb = document.getElementById('fb' + i);
+      if (sel && sel.value === it.answer) { score++; fb.innerHTML = '<span class="right">Correct!</span>'; }
+      else { fb.innerHTML = `<span class="wrong">Not quite — the right word is: ${it.answer}</span>`; }
+    });
+    document.getElementById('quizScore').textContent = `Your score: ${score} / ${quizData.length}`;
+  });
+});
+
+let cards = [], cardIdx = 0, flipped = false;
+function showCard() {
+  const el = document.getElementById('flashCard');
+  if (!cards.length) { el.textContent = 'Press the button to make your cards'; document.getElementById('cardCount').textContent = ''; return; }
+  el.textContent = flipped ? cards[cardIdx].back : cards[cardIdx].front;
+  document.getElementById('cardCount').textContent = `Card ${cardIdx + 1} of ${cards.length}`;
+}
+document.getElementById('cardsBtn').addEventListener('click', () => {
+  cards = notesEl.value.split(/\n/).map(l => l.trim()).filter(l => l.includes(':')).map(l => {
+    const i = l.indexOf(':'); return { front: l.slice(0, i).trim(), back: l.slice(i + 1).trim() };
+  }).filter(c => c.front && c.back);
+  cardIdx = 0; flipped = false;
+  if (!cards.length) { document.getElementById('flashCard').textContent = 'No flashcards found. Write notes like  Term: definition  — one per line.'; document.getElementById('cardCount').textContent = ''; return; }
+  showCard();
+});
+document.getElementById('flashCard').addEventListener('click', () => { if (cards.length) { flipped = !flipped; showCard(); } });
+document.getElementById('prevCard').addEventListener('click', () => { if (cards.length) { cardIdx = (cardIdx - 1 + cards.length) % cards.length; flipped = false; showCard(); } });
+document.getElementById('nextCard').addEventListener('click', () => { if (cards.length) { cardIdx = (cardIdx + 1) % cards.length; flipped = false; showCard(); } });
+
+document.getElementById('planBtn').addEventListener('click', () => {
+  const subject = document.getElementById('planSubject').value.trim() || 'My Subject';
+  const topics = document.getElementById('planTopics').value.split(/\n/).map(s => s.trim()).filter(Boolean);
+  const days = Math.max(2, Math.min(30, parseInt(document.getElementById('planDays').value) || 5));
+  const area = document.getElementById('planArea');
+  if (!topics.length) { area.innerHTML = '<div class="plan-day">Please write at least one topic, one per line.</div>'; return; }
+  const studyDays = days - 1;
+  const perDay = Math.ceil(topics.length / studyDays);
+  let html = `<p style="margin-top:12px;color:#99a">Your ${days}-day plan for <b style="color:#eef0ff">${subject}</b>:</p>`;
+  let t = 0;
+  for (let d = 1; d <= studyDays; d++) {
+    const chunk = topics.slice(t, t + perDay); t += perDay;
+    html += `<div class="plan-day"><b>Day ${d}:</b> Study ${chunk.length ? chunk.join(' · ') : '— revise your weak topics'}<br>End the day by testing yourself with the Quiz Maker.</div>`;
+    if (t >= topics.length && d < studyDays) { for (let e = d + 1; e <= studyDays; e++) html += `<div class="plan-day"><b>Day ${e}:</b> Revision day — redo the flashcards and the quiz until your score is full.</div>`; break; }
+  }
+  html += `<div class="plan-day"><b>Day ${days}:</b> Final revision + full self test. No new topics today.</div>`;
+  area.innerHTML = html;
+});
+
+let remain = 25 * 60, ticking = null;
+const face = document.getElementById('timerFace');
+function drawTimer() { face.textContent = String(Math.floor(remain / 60)).padStart(2, '0') + ':' + String(remain % 60).padStart(2, '0'); }
+function stopTimer() { if (ticking) { clearInterval(ticking); ticking = null; } }
+document.getElementById('startTimer').addEventListener('click', () => {
+  stopTimer();
+  ticking = setInterval(() => { remain--; drawTimer(); if (remain <= 0) { stopTimer(); document.getElementById('timerMsg').textContent = 'Round complete! Take a break, you earned it.'; } }, 1000);
+  document.getElementById('timerMsg').textContent = 'Focus mode on. You can do this.';
+});
+document.getElementById('pauseTimer').addEventListener('click', stopTimer);
+document.getElementById('resetTimer').addEventListener('click', () => { stopTimer(); remain = 25 * 60; drawTimer(); document.getElementById('timerMsg').textContent = ''; });
+document.getElementById('breakTimer').addEventListener('click', () => { stopTimer(); remain = 5 * 60; drawTimer(); document.getElementById('timerMsg').textContent = 'Break time — stretch, drink water, look away from the screen.'; });
+drawTimer();
+</script>
+</body>
+</html>
